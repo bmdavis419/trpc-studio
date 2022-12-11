@@ -9,7 +9,6 @@ const Home: NextPage = () => {
   const hello = trpc.example.hello.useQuery({ text: "from tRPC" });
 
   // get all the keys on trpc
-  const test = trpc["example"]["hello"].useQuery({ text: "object land" });
 
   // IMPORTANT THIS HOLDS HOW I WILL GET DATA ON THE CLIENT!!!
   trpcClient["demo"]["goodbye"].query().then((res) => {
