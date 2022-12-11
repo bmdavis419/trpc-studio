@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
 import { exampleRouter } from "./example";
@@ -27,7 +28,7 @@ export type AppRouter = typeof appRouter;
 
 // SUPER IMPORTANT THIS IS HOW YOU ACTUALLY CALL FUNCTIONS
 // now I just need an app router on the client side...
-// console.log(Object.keys(appRouter["demo"]["mutationTest"]));
+console.log(Object.keys(appRouter["example"]["hello"]["_def"]));
 // console.log(Object.keys(appRouter["demo"]));
 
 // console.log(appRouter.demo.goodbye._def);
@@ -45,16 +46,18 @@ caller.demo.goodbye().then((res) => {
   console.log(res);
 });
 
-type StudioTree = {
+export type StudioTree = {
   children: StudioTree[];
   parent: StudioTree | null;
   key: string;
   isMutation: boolean;
   isQuery: boolean;
+  id: string;
 };
 
-const generateStudioTree = (router: Object | Function): StudioTree => {
+export const generateStudioTree = (router: Object | Function): StudioTree => {
   const root: StudioTree = {
+    id: "root",
     children: [],
     parent: null,
     key: "root",
@@ -72,6 +75,7 @@ const generateStudioTree = (router: Object | Function): StudioTree => {
     // LEAF NODE
     root.isMutation = (router as any)._def.mutation === true;
     root.isQuery = (router as any)._def.query === true;
+    root.id = randomUUID();
   } else {
     // INTERMEDIATE NODE
     for (const key of keys) {
@@ -80,6 +84,9 @@ const generateStudioTree = (router: Object | Function): StudioTree => {
 
       // create a new node
       const node = generateStudioTree(router[key]);
+
+      // set the id
+      node.id = root.id + "." + key;
 
       // set the parent
       node.parent = root;
@@ -94,7 +101,3 @@ const generateStudioTree = (router: Object | Function): StudioTree => {
 
   return root;
 };
-
-const tree = generateStudioTree(appRouter);
-
-// write to file
