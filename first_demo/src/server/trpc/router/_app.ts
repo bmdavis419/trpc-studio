@@ -21,6 +21,16 @@ export const appRouter = router({
         return input;
       }),
   }),
+  live: router({
+    hello: publicProcedure.query(async ({ ctx }) => {
+      return "hello live";
+    }),
+    nested: router({
+      hello: publicProcedure.query(async ({ ctx }) => {
+        return "hello nested";
+      }),
+    }),
+  }),
 });
 
 // export type definition of API

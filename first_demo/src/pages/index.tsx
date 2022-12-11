@@ -14,6 +14,8 @@ const Home: NextPage = () => {
     null
   );
 
+  const [responseData, setResponseData] = useState<string | null>(null);
+
   const entryData = useQuery(
     ["entry", entry],
     () => {
@@ -42,11 +44,11 @@ const Home: NextPage = () => {
 
     if (selectedProcedure.isMutation) {
       (procedureObject as any).mutate().then((res: any) => {
-        console.log(res);
+        setResponseData(JSON.stringify(res));
       });
     } else {
       (procedureObject as any).query().then((res: any) => {
-        console.log(res);
+        setResponseData(JSON.stringify(res));
       });
     }
   };
@@ -93,7 +95,9 @@ const Home: NextPage = () => {
                 return (
                   <button
                     key={child.id}
-                    className="mx-8 my-2 flex justify-between overflow-hidden rounded-md px-2 py-3 text-xl ring-primary hover:bg-gray-900"
+                    className={`mx-8 my-2 flex justify-between overflow-hidden rounded-md px-2 py-3 text-xl ring-primary hover:bg-gray-900 ${
+                      selectedProcedure?.id === child.id ? "ring-2" : ""
+                    }`}
                     onClick={() => {
                       if (child.isMutation || child.isQuery) {
                         setSelectedProcedure(child);
@@ -130,6 +134,9 @@ const Home: NextPage = () => {
           <div className="h-4/5 rounded-md bg-secondary px-4 py-2">
             <div className="flex flex-row items-center justify-between border-b-2 border-gray-200 py-2">
               <h2 className="text-2xl font-light">Procedure Response</h2>
+            </div>
+            <div>
+              <pre>{responseData}</pre>
             </div>
           </div>
         </div>
