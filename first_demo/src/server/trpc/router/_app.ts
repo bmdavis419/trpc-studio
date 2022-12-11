@@ -16,7 +16,12 @@ export const appRouter = router({
       return "mutationTest";
     }),
     inputTest: publicProcedure
-      .input(z.string())
+      .input(
+        z.object({
+          name: z.string(),
+          details: z.number(),
+        })
+      )
       .mutation(async ({ input, ctx }) => {
         return input;
       }),
@@ -36,6 +41,8 @@ export const appRouter = router({
 // export type definition of API
 export type AppRouter = typeof appRouter;
 
+// console.log(appRouter.demo.inputTest._def.inputs[0]._def.shape());
+
 export type StudioTree = {
   children: StudioTree[];
   parent: StudioTree | null;
@@ -43,6 +50,13 @@ export type StudioTree = {
   isMutation: boolean;
   isQuery: boolean;
   id: string;
+  inputs: StudioInput[];
+};
+
+export type StudioInput = {
+  name: string;
+  type: "string" | "number" | "boolean" | "object";
+  shape: StudioInput[];
 };
 
 // TODO: this is not great, but it works for now, need to add this to the generateStudioTree function
@@ -67,6 +81,7 @@ export const generateStudioTree = (router: Object | Function): StudioTree => {
     key: "root",
     isMutation: false,
     isQuery: false,
+    inputs: [],
   };
 
   const keys = Object.keys(router) as (keyof typeof router)[];
