@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type NextPage } from "next";
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trpcClient } from "../utils/trpc";
 import { StudioDTO } from "./api/studio/[id]";
 
@@ -10,47 +10,55 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 const GetInput: React.FC<{
   input: any;
   name: string | null;
-  data: any;
+  inputData: { key: string; value: any }[];
   setData: Function;
   path: string;
-}> = ({ input, name, data, setData, path }) => {
+  changeCounter: number;
+}> = ({ input, name, inputData, setData, path, changeCounter }) => {
   const [output, setOutput] = useState(<div></div>);
   // check the type of the input
+  const [localState, setLocalState] = useState<any>(null);
+
+  const hasInit = useRef(false);
+
+  const internalChangeCounter = useRef(0);
+
   useEffect(() => {
     if (input && "typeName" in input) {
       // check the input type
       switch (input.typeName) {
         case "string":
-          // split up the path
-          const parts = path.split(".");
-          // remove the first part
-          parts.shift();
-
-          // copy the data
-          let newObject = parts.reduceRight(
-            (obj, elem) => ({ [elem]: obj }),
-            {}
-          );
-
-          // go down the new object tree
-          let currentObject = newObject;
-          const objParts = Object.keys(currentObject);
-          for (let i = 0; i < objParts.length - 1; i++) {
-            // @ts-ignore
-            currentObject = currentObject[objParts[i]];
+          setLocalState("");
+          // add entry to data
+          if (
+            changeCounter !== internalChangeCounter.current ||
+            (!inputData.find((d) => d.key === path) && !hasInit.current)
+          ) {
+            if (path === "root") {
+              setData("");
+            }
+            setData((prev: any) => [...prev, { key: path, value: "" }]);
+            hasInit.current = true;
+            internalChangeCounter.current = changeCounter;
           }
-
-          // set the value of the current object
-          // @ts-ignore
-          currentObject[objParts[objParts.length - 1]] = "new";
-          console.log(currentObject);
-
           setOutput(
             <input
               type={"string"}
               placeholder={name || "input"}
-              value={data}
-              onChange={(e) => {}}
+              value={localState}
+              onChange={(e) => {
+                // update the data
+                setData((prev: { key: string; value: any }[]) => {
+                  const newData = prev.map((d) => {
+                    if (d.key === path) {
+                      return { key: path, value: e.target.value };
+                    }
+                    return d;
+                  });
+                  return newData;
+                });
+                setLocalState(e.target.value);
+              }}
             />
           );
           break;
@@ -66,9 +74,10 @@ const GetInput: React.FC<{
               <GetInput
                 input={input.shape[key]}
                 name={key}
-                data={data}
+                inputData={inputData}
                 setData={setData}
                 path={path + "." + key}
+                changeCounter={changeCounter}
               />
             );
           }
@@ -85,6 +94,8 @@ const GetInput: React.FC<{
           );
           break;
       }
+    } else {
+      setOutput(<div></div>);
     }
   }, [input]);
   return output;
@@ -109,9 +120,20 @@ const Home: NextPage = () => {
     {}
   );
 
-  const [inputData, setInputData] = useState<any>({});
+  const [inputData, setInputData] = useState<{ key: string; value: any }[]>([]);
+
+  // counter to trigger a reset of the input data within nested components
+  // either genius or stupid idk
+  const [changeCounter, setChangeCounter] = useState(0);
+
+  // reset input data when the selected procedure changes
+  useEffect(() => {
+    setInputData([]);
+    setChangeCounter((prev) => prev + 1);
+  }, [selectedProcedure]);
 
   useEffect(() => {
+    // console.log(generateInputObject(inputData));
     console.log(inputData);
   }, [inputData]);
 
@@ -140,6 +162,26 @@ const Home: NextPage = () => {
         setResponseData(JSON.stringify(res));
       });
     }
+  };
+
+  const generateInputObject = (input: { key: string; value: any }[]): any => {
+    const output: any = {};
+    for (const entry of input) {
+      const parts = entry.key.split(".");
+      parts.shift();
+      let current = output;
+      for (const part of parts) {
+        if (part === parts[parts.length - 1]) {
+          current[part] = entry.value;
+        } else {
+          if (!current[part]) {
+            current[part] = {};
+          }
+          current = current[part];
+        }
+      }
+    }
+    return output;
   };
 
   if (entryData.isLoading || !entryData.data) return <div>Loading...</div>;
@@ -222,9 +264,10 @@ const Home: NextPage = () => {
               <GetInput
                 input={selectedProcedure?.input}
                 name={"root"}
-                data={inputData}
+                inputData={inputData}
                 setData={setInputData}
                 path={"root"}
+                changeCounter={changeCounter}
               />
             </div>
           </div>

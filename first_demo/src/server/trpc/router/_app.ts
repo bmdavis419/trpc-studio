@@ -16,6 +16,9 @@ export const appRouter = router({
     mutationTest: publicProcedure.mutation(async () => {
       return "mutationTest";
     }),
+    oneInput: publicProcedure.input(z.string()).query(async ({ input }) => {
+      return input;
+    }),
     inputTest: publicProcedure
       .input(
         z.object({
@@ -23,6 +26,19 @@ export const appRouter = router({
           details: z.number(),
           sub: z.object({
             name: z.string(),
+          }),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        return input;
+      }),
+    second: publicProcedure
+      .input(
+        z.object({
+          newName: z.string(),
+          details: z.number(),
+          sub: z.object({
+            secondName: z.string(),
           }),
         })
       )
