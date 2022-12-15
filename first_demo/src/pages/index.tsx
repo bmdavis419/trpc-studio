@@ -1,11 +1,94 @@
 import { useQuery } from "@tanstack/react-query";
 import { type NextPage } from "next";
 import Head from "next/head";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpcClient } from "../utils/trpc";
 import { StudioDTO } from "./api/studio/[id]";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const GetInput: React.FC<{
+  input: any;
+  name: string | null;
+  data: any;
+  setData: Function;
+  path: string;
+}> = ({ input, name, data, setData, path }) => {
+  const [output, setOutput] = useState(<div></div>);
+  // check the type of the input
+  useEffect(() => {
+    if (input && "typeName" in input) {
+      // check the input type
+      switch (input.typeName) {
+        case "string":
+          // split up the path
+          const parts = path.split(".");
+          // remove the first part
+          parts.shift();
+
+          // copy the data
+          let newObject = parts.reduceRight(
+            (obj, elem) => ({ [elem]: obj }),
+            {}
+          );
+
+          // go down the new object tree
+          let currentObject = newObject;
+          const objParts = Object.keys(currentObject);
+          for (let i = 0; i < objParts.length - 1; i++) {
+            // @ts-ignore
+            currentObject = currentObject[objParts[i]];
+          }
+
+          // set the value of the current object
+          // @ts-ignore
+          currentObject[objParts[objParts.length - 1]] = "new";
+          console.log(currentObject);
+
+          setOutput(
+            <input
+              type={"string"}
+              placeholder={name || "input"}
+              value={data}
+              onChange={(e) => {}}
+            />
+          );
+          break;
+        case "number":
+          setOutput(<input type={"number"} placeholder={name || "input"} />);
+          break;
+        case "object":
+          // get array of children
+          const children = [];
+          const keys = Object.keys(input.shape);
+          for (const key of keys) {
+            children.push(
+              <GetInput
+                input={input.shape[key]}
+                name={key}
+                data={data}
+                setData={setData}
+                path={path + "." + key}
+              />
+            );
+          }
+          setOutput(
+            <div>
+              {children.map((child, idx) => {
+                return (
+                  <div key={idx} className="mb-2">
+                    {child}
+                  </div>
+                );
+              })}
+            </div>
+          );
+          break;
+      }
+    }
+  }, [input]);
+  return output;
+};
 
 const Home: NextPage = () => {
   const [entry, setEntry] = useState("root");
@@ -25,6 +108,12 @@ const Home: NextPage = () => {
     },
     {}
   );
+
+  const [inputData, setInputData] = useState<any>({});
+
+  useEffect(() => {
+    console.log(inputData);
+  }, [inputData]);
 
   const runProcedure = async () => {
     if (!selectedProcedure) return;
@@ -129,7 +218,15 @@ const Home: NextPage = () => {
                 RUN {"->"}
               </button>
             </div>
-            {/* TODO: add inputs */}
+            <div className="text-black">
+              <GetInput
+                input={selectedProcedure?.input}
+                name={"root"}
+                data={inputData}
+                setData={setInputData}
+                path={"root"}
+              />
+            </div>
           </div>
           <div className="h-4/5 rounded-md bg-secondary px-4 py-2">
             <div className="flex flex-row items-center justify-between border-b-2 border-gray-200 py-2">

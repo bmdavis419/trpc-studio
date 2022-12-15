@@ -60,13 +60,7 @@ export type StudioTree = {
   isMutation: boolean;
   isQuery: boolean;
   id: string;
-  inputs: StudioInput[];
-};
-
-export type StudioInput = {
-  name: string;
-  type: "string" | "number" | "boolean" | "object";
-  shape: StudioInput[];
+  input: any;
 };
 
 // TODO: this is not great, but it works for now, need to add this to the generateStudioTree function
@@ -91,7 +85,7 @@ export const generateStudioTree = (router: Object | Function): StudioTree => {
     key: "root",
     isMutation: false,
     isQuery: false,
-    inputs: [],
+    input: {},
   };
 
   const keys = Object.keys(router) as (keyof typeof router)[];
@@ -104,6 +98,13 @@ export const generateStudioTree = (router: Object | Function): StudioTree => {
     // LEAF NODE
     root.isMutation = (router as any)._def.mutation === true;
     root.isQuery = (router as any)._def.query === true;
+
+    // get the inputs
+    const inputs = (router as any)._def.inputs;
+    if (inputs && inputs.length > 0) {
+      console.log(fromZodSchema(inputs[0]));
+      root.input = fromZodSchema(inputs[0]);
+    }
     root.id = randomUUID();
   } else {
     // INTERMEDIATE NODE

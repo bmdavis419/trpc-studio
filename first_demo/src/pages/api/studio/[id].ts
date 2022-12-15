@@ -13,6 +13,7 @@ export type StudioDTO = {
   isMutation: boolean;
   isQuery: boolean;
   id: string;
+  input: any;
 };
 
 export default (req: NextApiRequest, res: NextApiResponse) => {
@@ -29,6 +30,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
     const children = root.children;
     const dto: StudioDTO = {
       children: children.map((child) => ({
+        input: child.input,
         children: [],
         parentId: child.parent ? child.parent.id : null,
         key: child.key,
@@ -36,6 +38,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
         isQuery: child.isQuery,
         id: child.id,
       })),
+      input: root.input,
       parentId: root.parent ? root.parent.id : null,
       key: root.key,
       isMutation: root.isMutation,
@@ -63,6 +66,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
     // if the node is found then return the node and its children
     const dto: StudioDTO = {
       children: node.children.map((child) => ({
+        input: child.input,
         children: [],
         parentId: child.parent ? child.parent.id : null,
         key: child.key,
@@ -70,6 +74,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
         isQuery: child.isQuery,
         id: child.id,
       })),
+      input: node.input,
       parentId: node.parent ? node.parent.id : null,
       key: node.key,
       isMutation: node.isMutation,
