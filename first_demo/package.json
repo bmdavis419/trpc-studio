@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@onetyped/zod": "^0.0.4",
     "@tanstack/react-query": "^4.16.0",
     "@trpc/client": "^10.0.0",
     "@trpc/next": "^10.0.0",

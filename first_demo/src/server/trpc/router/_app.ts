@@ -1,3 +1,4 @@
+import { fromZodSchema } from "@onetyped/zod";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
@@ -20,6 +21,9 @@ export const appRouter = router({
         z.object({
           name: z.string(),
           details: z.number(),
+          sub: z.object({
+            name: z.string(),
+          }),
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -37,6 +41,12 @@ export const appRouter = router({
     }),
   }),
 });
+
+// test out one typed
+console.log(fromZodSchema(appRouter.demo.inputTest._def.inputs[0] as any));
+console.log(
+  Object.keys(fromZodSchema(appRouter.demo.inputTest._def.inputs[0] as any))
+);
 
 // export type definition of API
 export type AppRouter = typeof appRouter;
