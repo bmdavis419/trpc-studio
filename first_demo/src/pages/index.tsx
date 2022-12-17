@@ -313,8 +313,8 @@ const Home: NextPage = () => {
             <div className="flex flex-row items-center justify-between border-b-2 border-gray-200 py-2">
               <h2 className="text-2xl font-light">Procedure Response</h2>
             </div>
-            <div>
-              <pre>{responseData}</pre>
+            <div className="">
+              <pre className="break-words">{responseData}</pre>
             </div>
           </div>
         </div>

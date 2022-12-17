@@ -45,6 +45,19 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         return input;
       }),
+    bigInput: publicProcedure
+      .input(
+        z.object({
+          name: z.string(),
+          details: z.number(),
+          email: z.string(),
+          phone: z.string(),
+          address: z.string(),
+        })
+      )
+      .query(async ({ input }) => {
+        return input;
+      }),
   }),
   live: router({
     hello: publicProcedure.query(async ({ ctx }) => {
