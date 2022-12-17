@@ -139,7 +139,7 @@ const Home: NextPage = () => {
   }, [selectedProcedure]);
 
   useEffect(() => {
-    // console.log(generateInputObject(inputData));
+    console.log(generateInputObject(inputData));
     console.log(inputData);
   }, [inputData]);
 
@@ -159,35 +159,68 @@ const Home: NextPage = () => {
       procedureObject = procedureObject[part];
     }
 
+    const input = generateInputObject(inputData);
     if (selectedProcedure.isMutation) {
-      (procedureObject as any).mutate().then((res: any) => {
+      (procedureObject as any).mutate(input).then((res: any) => {
         setResponseData(JSON.stringify(res));
       });
     } else {
-      (procedureObject as any).query().then((res: any) => {
+      (procedureObject as any).query(input).then((res: any) => {
         setResponseData(JSON.stringify(res));
       });
     }
   };
 
-  const generateInputObject = (input: { key: string; value: any }[]): any => {
-    const output: any = {};
-    for (const entry of input) {
-      const parts = entry.key.split(".");
-      parts.shift();
-      let current = output;
-      for (const part of parts) {
-        if (part === parts[parts.length - 1]) {
-          current[part] = entry.value;
-        } else {
-          if (!current[part]) {
-            current[part] = {};
-          }
-          current = current[part];
+  const generateInputShape = (input: any): any => {
+    // input is an object with typeName
+    if (!input) return null;
+
+    if ("typeName" in input) {
+      if (input.typeName === "object") {
+        const output: any = {};
+        const keys = Object.keys(input.shape);
+        for (const key of keys) {
+          output[key] = generateInputShape(input.shape[key]);
         }
+        return output;
+      } else if (input.typeName === "string") {
+        return "";
+      } else if (input.typeName === "number") {
+        return 0;
       }
     }
-    return output;
+  };
+
+  const generateInputObject = (input: { key: string; value: any }[]): any => {
+    // get the shape
+    const shape = generateInputShape(selectedProcedure?.input);
+    if (shape === null) return null;
+
+    // check if the shape is an object
+    if (typeof shape === "object") {
+      // go through the input array and add the values to the shape
+      for (let i = 0; i < input.length; i++) {
+        const entry = input[i];
+        const parts = entry!.key.split(".");
+        parts.shift();
+
+        let current = shape;
+        for (let j = 0; j < parts.length; j++) {
+          const part = parts[j] || "";
+          if (j === parts.length - 1) {
+            current[part] = entry!.value;
+          } else {
+            current = current[part];
+          }
+        }
+      }
+    } else {
+      if (input.length > 0) {
+        return input[0]!.value;
+      }
+    }
+
+    return shape;
   };
 
   if (entryData.isLoading || !entryData.data) return <div>Loading...</div>;

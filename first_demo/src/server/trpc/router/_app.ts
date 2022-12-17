@@ -59,10 +59,10 @@ export const appRouter = router({
 });
 
 // test out one typed
-console.log(fromZodSchema(appRouter.demo.inputTest._def.inputs[0] as any));
-console.log(
-  Object.keys(fromZodSchema(appRouter.demo.inputTest._def.inputs[0] as any))
-);
+// console.log(fromZodSchema(appRouter.demo.inputTest._def.inputs[0] as any));
+// console.log(
+//   Object.keys(fromZodSchema(appRouter.demo.inputTest._def.inputs[0] as any))
+// );
 
 // export type definition of API
 export type AppRouter = typeof appRouter;
@@ -118,7 +118,6 @@ export const generateStudioTree = (router: Object | Function): StudioTree => {
     // get the inputs
     const inputs = (router as any)._def.inputs;
     if (inputs && inputs.length > 0) {
-      console.log(fromZodSchema(inputs[0]));
       root.input = fromZodSchema(inputs[0]);
     }
     root.id = randomUUID();
