@@ -13,92 +13,103 @@ const GetInput: React.FC<{
   inputData: { key: string; value: any }[];
   setData: Function;
   path: string;
-  changeCounter: number;
-}> = ({ input, name, inputData, setData, path, changeCounter }) => {
-  const [output, setOutput] = useState(<div></div>);
+}> = ({ input, name, inputData, setData, path }) => {
   // check the type of the input
-  const [localState, setLocalState] = useState<any>(null);
+  const [localStateString, setLocalStateString] = useState("");
+  const [localStateNumber, setLocalStateNumber] = useState(0);
 
-  const hasInit = useRef(false);
+  if (!(input && "typeName" in input)) return <div></div>;
 
-  const internalChangeCounter = useRef(0);
-
-  useEffect(() => {
-    if (input && "typeName" in input) {
-      // check the input type
-      switch (input.typeName) {
-        case "string":
-          setLocalState("");
-          // add entry to data
-          if (
-            changeCounter !== internalChangeCounter.current ||
-            (!inputData.find((d) => d.key === path) && !hasInit.current)
-          ) {
-            if (path === "root") {
-              setData("");
-            }
-            setData((prev: any) => [...prev, { key: path, value: "" }]);
-            hasInit.current = true;
-            internalChangeCounter.current = changeCounter;
-          }
-          setOutput(
-            <input
-              type={"string"}
-              placeholder={name || "input"}
-              value={localState}
-              onChange={(e) => {
-                // update the data
-                setData((prev: { key: string; value: any }[]) => {
-                  const newData = prev.map((d) => {
-                    if (d.key === path) {
-                      return { key: path, value: e.target.value };
-                    }
-                    return d;
-                  });
-                  return newData;
-                });
-                setLocalState(e.target.value);
-              }}
-            />
-          );
-          break;
-        case "number":
-          setOutput(<input type={"number"} placeholder={name || "input"} />);
-          break;
-        case "object":
-          // get array of children
-          const children = [];
-          const keys = Object.keys(input.shape);
-          for (const key of keys) {
-            children.push(
-              <GetInput
-                input={input.shape[key]}
-                name={key}
-                inputData={inputData}
-                setData={setData}
-                path={path + "." + key}
-                changeCounter={changeCounter}
-              />
-            );
-          }
-          setOutput(
-            <div>
-              {children.map((child, idx) => {
-                return (
-                  <div key={idx} className="mb-2">
-                    {child}
-                  </div>
-                );
-              })}
+  if (input.typeName === "object") {
+    // get array of children
+    const children = [];
+    const keys = Object.keys(input.shape);
+    for (const key of keys) {
+      children.push(
+        <GetInput
+          input={input.shape[key]}
+          name={key}
+          inputData={inputData}
+          setData={setData}
+          path={path + "." + key}
+        />
+      );
+    }
+    return (
+      <div>
+        {children.map((child, idx) => {
+          return (
+            <div key={idx} className="mb-2">
+              {child}
             </div>
           );
-          break;
-      }
-    } else {
-      setOutput(<div></div>);
-    }
-  }, [input]);
-  return output;
+        })}
+      </div>
+    );
+  } else if (input.typeName === "string") {
+    return (
+      <input
+        type={"string"}
+        placeholder={name || "input"}
+        value={localStateString}
+        onChange={(e) => {
+          // update the data
+          setLocalStateString(e.target.value);
+          setData((prev: { key: string; value: any }[]) => {
+            let exists = false;
+            const newData = prev.map((d) => {
+              if (d.key === path) {
+                exists = true;
+                return { key: path, value: e.target.value };
+              }
+              return d;
+            });
+
+            if (!exists) {
+              newData.push({ key: path, value: e.target.value });
+            }
+            return newData;
+          });
+        }}
+      />
+    );
+  } else if (input.typeName === "number") {
+    return (
+      <input
+        type={"number"}
+        placeholder={name || "input"}
+        value={localStateNumber}
+        onChange={(e) => {
+          // update the data
+          const parsed = Number(e.target.value);
+          if (!isNaN(parsed)) {
+            setData((prev: { key: string; value: any }[]) => {
+              // try to parse the number
+              let exists = false;
+              const newData = prev.map((d) => {
+                if (d.key === path) {
+                  exists = true;
+                  return { key: path, value: parsed };
+                }
+                return d;
+              });
+
+              if (!exists) {
+                newData.push({
+                  key: path,
+                  value: parsed,
+                });
+              }
+              return newData;
+            });
+            setLocalStateNumber(parsed);
+          }
+        }}
+      />
+    );
+  }
+
+  return <div></div>;
 };
 
 const Home: NextPage = () => {
@@ -122,14 +133,9 @@ const Home: NextPage = () => {
 
   const [inputData, setInputData] = useState<{ key: string; value: any }[]>([]);
 
-  // counter to trigger a reset of the input data within nested components
-  // either genius or stupid idk
-  const [changeCounter, setChangeCounter] = useState(0);
-
   // reset input data when the selected procedure changes
   useEffect(() => {
     setInputData([]);
-    setChangeCounter((prev) => prev + 1);
   }, [selectedProcedure]);
 
   useEffect(() => {
@@ -267,7 +273,6 @@ const Home: NextPage = () => {
                 inputData={inputData}
                 setData={setInputData}
                 path={"root"}
-                changeCounter={changeCounter}
               />
             </div>
           </div>
