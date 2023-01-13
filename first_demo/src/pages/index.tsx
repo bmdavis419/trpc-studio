@@ -162,11 +162,11 @@ const Home: NextPage = () => {
     const input = generateInputObject(inputData);
     if (selectedProcedure.isMutation) {
       (procedureObject as any).mutate(input).then((res: any) => {
-        setResponseData(JSON.stringify(res));
+        setResponseData(JSON.stringify(res, null, 2));
       });
     } else {
       (procedureObject as any).query(input).then((res: any) => {
-        setResponseData(JSON.stringify(res));
+        setResponseData(JSON.stringify(res, null, 2));
       });
     }
   };
